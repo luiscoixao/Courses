@@ -176,6 +176,10 @@ function renderListTab() {
         itemsList.innerHTML = html;
     }
 
+    // Export button
+    const btnExport = document.getElementById('btn-export');
+    btnExport.style.display = total > 0 ? 'block' : 'none';
+
     // Reset button
     const btnReset = document.getElementById('btn-reset');
     btnReset.style.display = total > 0 ? 'block' : 'none';
@@ -340,6 +344,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Export
+    document.getElementById('btn-export').addEventListener('click', exportAsText);
+
     // Reset
     document.getElementById('btn-reset').addEventListener('click', () => {
         if (confirm('Voulez-vous supprimer tous les articles ?')) {
@@ -396,8 +403,80 @@ function formatDate(ts) {
     return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+// ─── Export ───────────────────────────────────────────────────────────────────
+
+function exportAsText() {
+    if (state.items.length === 0) {
+        alert('Votre liste est vide !');
+        return;
+    }
+
+    // Grouper par catégorie
+    const byCategory = {};
+    state.items.forEach(item => {
+        if (!byCategory[item.categoryId]) {
+            byCategory[item.categoryId] = [];
+        }
+        byCategory[item.categoryId].push(item);
+    });
+
+    // Générer le texte
+    let text = '🛒 MARCHÉ - Liste de Courses\n';
+    text += '═══════════════════════════════\n\n';
+
+    const unchecked = state.items.filter(i => !i.checked);
+    const checked = state.items.filter(i => i.checked);
+
+    // Articles à acheter
+    if (unchecked.length > 0) {
+        text += '📝 À ACHETER (' + unchecked.length + ')\n';
+        text += '───────────────────────────────\n';
+        
+        CATEGORIES.forEach(cat => {
+            const items = unchecked.filter(i => i.categoryId === cat.id);
+            if (items.length > 0) {
+                text += `\n${cat.emoji} ${cat.label}:\n`;
+                items.forEach(item => {
+                    const qty = item.quantity > 1 ? ` (×${item.quantity})` : '';
+                    text += `  ☐ ${item.name}${qty}\n`;
+                });
+            }
+        });
+    }
+
+    // Articles cochés
+    if (checked.length > 0) {
+        text += `\n\n✅ DÉJÀ ACHETÉ (${checked.length})\n`;
+        text += '───────────────────────────────\n';
+        
+        CATEGORIES.forEach(cat => {
+            const items = checked.filter(i => i.categoryId === cat.id);
+            if (items.length > 0) {
+                text += `\n${cat.emoji} ${cat.label}:\n`;
+                items.forEach(item => {
+                    const qty = item.quantity > 1 ? ` (×${item.quantity})` : '';
+                    text += `  ✓ ${item.name}${qty}\n`;
+                });
+            }
+        });
+    }
+
+    text += `\n\n═══════════════════════════════\n`;
+    text += `Progression: ${checked.length}/${state.items.length} articles\n`;
+    text += `Généré le: ${new Date().toLocaleString('fr-FR')}\n`;
+
+    // Copier dans le presse-papiers
+    navigator.clipboard.writeText(text).then(() => {
+        alert('✅ Liste copiée dans le presse-papiers !\n\nVous pouvez maintenant la coller partout.');
+    }).catch(err => {
+        // Fallback: afficher dans une alerte
+        alert('Voici votre liste (copie manuelle):\n\n' + text);
+    });
+}
+
 // Global functions for inline onclick
 window.toggleItem = toggleItem;
 window.removeItem = removeItem;
 window.selectCategory = selectCategory;
 window.clearCheckedItems = clearChecked;
+window.exportAsText = exportAsText;
