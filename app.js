@@ -257,6 +257,8 @@ function renderHistoryTab() {
 
 function openModal() {
     state.quantity = 1;
+    document.getElementById('input-name').value = '';
+    document.getElementById('qty-value').textContent = '1';
     document.getElementById('modal-add').classList.add('active');
     document.getElementById('input-name').focus();
     renderCategoryGrid();
