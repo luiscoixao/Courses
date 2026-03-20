@@ -19,3 +19,9 @@ yarn-error.log
 # Misc
 .env
 .env.local
+.env.*.local
+
+# Secrets
+secrets.json
+firebase-config.js
+app-firebase.js
