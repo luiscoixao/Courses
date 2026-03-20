@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marché - Liste de Courses</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Icônes pour iPhone et navigateurs -->
+    <link rel="icon" type="image/png" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663424594289/8Y3DyzRHjgbTr6JxUFQrfB/icon-aLQDX2AZyPKmo3uxbZG7B6.webp" sizes="192x192">
+    <link rel="apple-touch-icon" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663424594289/8Y3DyzRHjgbTr6JxUFQrfB/icon-FhWacwhMKJbDsrzRGpbsyT.png">
+    <meta name="apple-mobile-web-app-capable" content="true">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Marché">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%232E7D32'/%3E%3Cpath d='M30 50 Q50 30 70 50' stroke='white' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" alt="Marché" class="logo">
+                <h1>Marché</h1>
+            </div>
+        </nav>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="list">🛒 Ma Liste</button>
+            <button class="tab-btn" data-tab="history">📋 Historique</button>
+        </div>
+
+        <!-- Tab: Liste -->
+        <div id="list-tab" class="tab-content active">
+            <!-- En-tête -->
+            <div class="list-header">
+                <div class="header-info">
+                    <h2>Ma Liste</h2>
+                    <p class="header-count" id="header-count"></p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-reset" id="btn-export" title="Exporter en texte" style="display: none;">📤</button>
+                    <button class="btn-reset" id="btn-reset" title="Réinitialiser">🗑</button>
+                </div>
+            </div>
+
+            <!-- Barre de progression -->
+            <div class="progress-container" id="progress-container" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <p class="progress-text" id="progress-text"></p>
+            </div>
+
+            <!-- Filtre catégories -->
+            <div class="filter-scroll" id="filter-scroll" style="display: none;">
+                <button class="filter-chip active" data-category="all">Tous</button>
+            </div>
+
+            <!-- État vide -->
+            <div class="empty-state" id="empty-state">
+                <p class="empty-emoji">🛒</p>
+                <h3>Votre liste est vide</h3>
+                <p>Appuyez sur le bouton + pour ajouter votre premier article</p>
+            </div>
+
+            <!-- Liste des articles -->
+            <div class="items-list" id="items-list"></div>
+
+            <!-- Bouton flottant + -->
+            <button class="fab" id="btn-add">+</button>
+        </div>
+
+        <!-- Tab: Historique -->
+        <div id="history-tab" class="tab-content">
+            <div class="history-header">
+                <div>
+                    <h2>Historique</h2>
+                    <p class="history-count" id="history-count"></p>
+                </div>
+                <button class="btn-clear-history" id="btn-clear-history" style="display: none;">Vider</button>
+            </div>
+
+            <div class="empty-state" id="empty-history">
+                <p class="empty-emoji">✅</p>
+                <h3>Aucun article coché</h3>
+                <p>Les articles que vous cochez apparaîtront ici.</p>
+            </div>
+
+            <div class="history-list" id="history-list"></div>
+        </div>
+    </div>
+
+    <!-- Modal d'ajout -->
+    <div class="modal" id="modal-add">
+        <div class="modal-overlay" id="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ajouter un article</h3>
+                <button class="btn-close" id="btn-close-modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Nom -->
+                <div class="form-group">
+                    <label>Nom de l'article</label>
+                    <input type="text" id="input-name" placeholder="Ex : Tomates cerises..." autofocus>
+                </div>
+
+                <!-- Quantité -->
+                <div class="form-group">
+                    <label>Quantité</label>
+                    <div class="qty-control">
+                        <button class="qty-btn" id="btn-qty-minus">−</button>
+                        <span class="qty-value" id="qty-value">1</span>
+                        <button class="qty-btn" id="btn-qty-plus">+</button>
+                    </div>
+                </div>
+
+                <!-- Catégorie -->
+                <div class="form-group">
+                    <label>Catégorie</label>
+                    <div class="category-grid" id="category-grid"></div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel">Annuler</button>
+                <button class="btn btn-primary" id="btn-add-item">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
