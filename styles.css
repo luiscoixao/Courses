@@ -89,6 +89,7 @@ body {
     display: none;
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-bottom: 80px;
 }
 
@@ -104,6 +105,8 @@ body {
     justify-content: space-between;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 12px;
 }
 
 .header-info h2 {
@@ -140,6 +143,8 @@ body {
 
 /* Progress */
 .progress-container {
+    display: flex;
+    flex-direction: column;
     padding: 12px 20px;
     background-color: var(--surface);
     gap: 6px;
@@ -172,7 +177,9 @@ body {
     padding: 10px 16px;
     border-bottom: 1px solid var(--border);
     overflow-x: auto;
+    overflow-y: hidden;
     scroll-behavior: smooth;
+    flex-shrink: 0;
 }
 
 .filter-scroll::-webkit-scrollbar {
