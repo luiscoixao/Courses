@@ -176,8 +176,12 @@ function renderListTab() {
         itemsList.innerHTML = html;
     }
 
-    // Export button
+    // Export buttons
+    const btnExportCsv = document.getElementById('btn-export-csv');
+    const btnImportCsv = document.getElementById('btn-import-csv');
     const btnExport = document.getElementById('btn-export');
+    btnExportCsv.style.display = total > 0 ? 'block' : 'none';
+    btnImportCsv.style.display = 'block';
     btnExport.style.display = total > 0 ? 'block' : 'none';
 
     // Reset button
@@ -268,6 +272,17 @@ function closeModal() {
     document.getElementById('modal-add').classList.remove('active');
 }
 
+function openImportModal() {
+    document.getElementById('modal-import').classList.add('active');
+    document.getElementById('import-file-input').value = '';
+    document.getElementById('import-preview').style.display = 'none';
+    document.getElementById('btn-confirm-import').disabled = true;
+}
+
+function closeImportModal() {
+    document.getElementById('modal-import').classList.remove('active');
+}
+
 function renderCategoryGrid() {
     const grid = document.getElementById('category-grid');
     let html = '';
@@ -320,6 +335,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-cancel').addEventListener('click', closeModal);
     document.getElementById('modal-overlay').addEventListener('click', closeModal);
 
+    // Import Modal
+    document.getElementById('btn-import-csv').addEventListener('click', openImportModal);
+    document.getElementById('btn-close-import-modal').addEventListener('click', closeImportModal);
+    document.getElementById('btn-cancel-import').addEventListener('click', closeImportModal);
+    document.getElementById('modal-import-overlay').addEventListener('click', closeImportModal);
+
     // Quantity
     document.getElementById('btn-qty-minus').addEventListener('click', () => {
         state.quantity = Math.max(1, state.quantity - 1);
@@ -346,7 +367,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Export
+    // Export CSV
+    document.getElementById('btn-export-csv').addEventListener('click', exportAsCSV);
+
+    // Import CSV
+    document.getElementById('import-file-input').addEventListener('change', handleCSVFileSelect);
+    document.getElementById('btn-confirm-import').addEventListener('click', importFromCSV);
+
+    // Export text
     document.getElementById('btn-export').addEventListener('click', exportAsText);
 
     // Reset
@@ -476,9 +504,229 @@ function exportAsText() {
     });
 }
 
+// ─── CSV Export ────────────────────────────────────────────────────────────────
+
+function exportAsCSV() {
+    if (state.items.length === 0) {
+        alert('Votre liste est vide !');
+        return;
+    }
+
+    // En-têtes CSV
+    const headers = ['nom', 'quantité', 'catégorie', 'validé'];
+    const rows = [];
+
+    // Ajouter les données
+    state.items.forEach(item => {
+        const category = getCategoryById(item.categoryId);
+        rows.push([
+            escapeCSV(item.name),
+            item.quantity,
+            escapeCSV(category.label),
+            item.checked ? 'oui' : 'non'
+        ]);
+    });
+
+    // Construire le CSV
+    let csv = headers.join(',') + '\n';
+    rows.forEach(row => {
+        csv += row.join(',') + '\n';
+    });
+
+    // Créer un blob et télécharger
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `marche-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function escapeCSV(str) {
+    if (str === null || str === undefined) return '';
+    str = str.toString();
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+}
+
+// ─── CSV Import ────────────────────────────────────────────────────────────────
+
+let importedItems = [];
+
+function handleCSVFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const csv = e.target.result;
+            importedItems = parseCSV(csv);
+            
+            if (importedItems.length === 0) {
+                alert('Aucun article trouvé dans le fichier CSV.');
+                return;
+            }
+
+            // Afficher l'aperçu
+            showImportPreview(importedItems);
+            document.getElementById('btn-confirm-import').disabled = false;
+        } catch (error) {
+            alert('Erreur lors de la lecture du fichier : ' + error.message);
+            console.error(error);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function parseCSV(csv) {
+    const lines = csv.trim().split('\n');
+    if (lines.length < 2) return [];
+
+    // Lire les en-têtes
+    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+    const nameIndex = headers.findIndex(h => h.includes('nom'));
+    const qtyIndex = headers.findIndex(h => h.includes('quantité') || h.includes('quantite'));
+    const categoryIndex = headers.findIndex(h => h.includes('catégorie') || h.includes('categorie'));
+    const checkedIndex = headers.findIndex(h => h.includes('validé') || h.includes('valide') || h.includes('checked'));
+
+    if (nameIndex === -1) {
+        throw new Error('Colonne "nom" non trouvée');
+    }
+
+    const items = [];
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const values = parseCSVLine(line);
+        const name = values[nameIndex]?.trim();
+        
+        if (!name) continue;
+
+        const quantity = parseInt(values[qtyIndex]?.trim() || '1') || 1;
+        const categoryLabel = values[categoryIndex]?.trim() || 'Autres';
+        const checked = values[checkedIndex]?.trim().toLowerCase() === 'oui' || 
+                       values[checkedIndex]?.trim().toLowerCase() === 'true' ||
+                       values[checkedIndex]?.trim().toLowerCase() === 'yes';
+
+        // Trouver la catégorie par label
+        let categoryId = 'autres';
+        const foundCat = CATEGORIES.find(c => c.label.toLowerCase() === categoryLabel.toLowerCase());
+        if (foundCat) {
+            categoryId = foundCat.id;
+        }
+
+        items.push({
+            name,
+            quantity,
+            categoryId,
+            checked
+        });
+    }
+
+    return items;
+}
+
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current);
+    return result;
+}
+
+function showImportPreview(items) {
+    const preview = document.getElementById('import-items-preview');
+    let html = '';
+    
+    items.forEach((item, index) => {
+        const category = getCategoryById(item.categoryId);
+        html += `
+            <div style="padding: 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <div style="font-size: 12px; color: var(--muted);">
+                        ${category.emoji} ${category.label} ${item.quantity > 1 ? `(×${item.quantity})` : ''}
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: var(--muted);">
+                    ${item.checked ? '✓ Coché' : 'Non coché'}
+                </div>
+            </div>
+        `;
+    });
+    
+    preview.innerHTML = html;
+    document.getElementById('import-preview').style.display = 'block';
+}
+
+function importFromCSV() {
+    if (importedItems.length === 0) {
+        alert('Aucun article à importer.');
+        return;
+    }
+
+    // Demander si l'utilisateur veut remplacer ou ajouter
+    const action = confirm(
+        `Importer ${importedItems.length} article(s) ?\n\n` +
+        'OK = Ajouter aux articles existants\n' +
+        'Annuler = Remplacer la liste actuelle'
+    );
+
+    if (!action) {
+        // Remplacer la liste
+        state.items = [];
+    }
+
+    // Ajouter les articles
+    importedItems.forEach(item => {
+        addItem(item.name, item.quantity, item.categoryId);
+        // Si l'article était coché, le cocher
+        if (item.checked) {
+            const lastItem = state.items[state.items.length - 1];
+            if (lastItem) {
+                lastItem.checked = true;
+                lastItem.checkedAt = Date.now();
+            }
+        }
+    });
+
+    saveItems();
+    render();
+    closeImportModal();
+    alert(`✅ ${importedItems.length} article(s) importé(s) avec succès !`);
+}
+
 // Global functions for inline onclick
 window.toggleItem = toggleItem;
 window.removeItem = removeItem;
 window.selectCategory = selectCategory;
 window.clearCheckedItems = clearChecked;
 window.exportAsText = exportAsText;
+window.exportAsCSV = exportAsCSV;
+window.importFromCSV = importFromCSV;

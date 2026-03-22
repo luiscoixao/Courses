@@ -37,10 +37,15 @@
                     <p class="header-count" id="header-count"></p>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn-reset" id="btn-export" title="Exporter en texte" style="display: none;">📤</button>
+                    <button class="btn-reset" id="btn-export-csv" title="Exporter en CSV">📥</button>
+                    <button class="btn-reset" id="btn-import-csv" title="Importer un CSV">📤</button>
+                    <button class="btn-reset" id="btn-export" title="Exporter en texte" style="display: none;">📋</button>
                     <button class="btn-reset" id="btn-reset" title="Réinitialiser">🗑</button>
                 </div>
             </div>
+
+            <!-- Input file caché pour l'import -->
+            <input type="file" id="csv-input" accept=".csv" style="display: none;">
 
             <!-- Barre de progression -->
             <div class="progress-container" id="progress-container" style="display: none;">
@@ -125,6 +130,33 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="btn-cancel">Annuler</button>
                 <button class="btn btn-primary" id="btn-add-item">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'import CSV -->
+    <div class="modal" id="modal-import">
+        <div class="modal-overlay" id="modal-import-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Importer une liste CSV</h3>
+                <button class="btn-close" id="btn-close-import-modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--muted);">
+                    Sélectionnez un fichier CSV avec les colonnes : <strong>nom, quantité, catégorie, validé</strong>
+                </p>
+                <input type="file" id="import-file-input" accept=".csv" class="file-input">
+                <div id="import-preview" style="margin-top: 16px; display: none;">
+                    <p style="font-weight: 600; margin-bottom: 8px;">Aperçu :</p>
+                    <div id="import-items-preview" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 8px;"></div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel-import">Annuler</button>
+                <button class="btn btn-primary" id="btn-confirm-import" disabled>Importer</button>
             </div>
         </div>
     </div>

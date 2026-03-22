@@ -717,3 +717,27 @@ body {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* File Input */
+.file-input {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    background-color: var(--surface);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.file-input:hover {
+    border-color: var(--primary);
+    background-color: rgba(46, 125, 50, 0.05);
+}
+
+#import-preview {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background-color: var(--surface);
+}
