@@ -131,7 +131,7 @@ body {
 #btn-export-csv,
 #btn-import-csv {
     opacity: 1;
-    font-size: 24px;
+    font-size: 20px;
 }
 
 .btn-reset:hover {
